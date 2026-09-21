@@ -16,11 +16,12 @@ MYSQL_PORT = int(os.environ.get("MYSQL_PORT", "3306"))
 MYSQL_USER = os.environ.get("MYSQL_USER", "root")
 MYSQL_PASSWORD = os.environ.get("MYSQL_PASSWORD", "")
 MYSQL_DATABASE = os.environ.get("MYSQL_DATABASE", "face_attendance")
+MYSQL_SSL_CA = os.environ.get("MYSQL_SSL_CA")  # path to CA cert file, e.g. skysql_ca.pem
 
 
 @contextmanager
 def get_connection():
-    conn = pymysql.connect(
+    connect_kwargs = dict(
         host=MYSQL_HOST,
         port=MYSQL_PORT,
         user=MYSQL_USER,
@@ -29,6 +30,9 @@ def get_connection():
         cursorclass=pymysql.cursors.DictCursor,
         autocommit=False,
     )
+    if MYSQL_SSL_CA:
+        connect_kwargs["ssl"] = {"ca": MYSQL_SSL_CA}
+    conn = pymysql.connect(**connect_kwargs)
     try:
         yield conn
     finally:
