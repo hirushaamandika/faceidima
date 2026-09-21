@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Face Attendance System</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #111; color: #eee; text-align: center; padding: 3rem; }
+  a.button { display: inline-block; margin: 0.7rem; padding: 0.9rem 1.8rem; font-size: 1rem;
+             border-radius: 8px; background: #4caf50; color: white; text-decoration: none; }
+  a.button.secondary { background: #2196f3; }
+  a.button.tertiary { background: #555; }
+  ul { list-style: none; padding: 0; }
+  li { padding: 0.3rem; }
+</style>
+</head>
+<body>
+  <h1>Face Attendance System</h1>
+  <p>
+    <a class="button" href="/register">Register New Face</a>
+    <a class="button secondary" href="/attendance">Mark Attendance</a>
+    <a class="button tertiary" href="/records">View Records</a>
+  </p>
+
+  <h3>Registered People ({{ users|length }})</h3>
+  {% if users %}
+  <ul>
+    {% for u in users %}
+    <li>{{ u }}</li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>No one registered yet.</p>
+  {% endif %}
+</body>
+</html>

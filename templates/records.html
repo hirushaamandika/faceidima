@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Attendance Records</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #111; color: #eee; padding: 2rem; }
+  h1, p { text-align: center; }
+  table { border-collapse: collapse; margin: 1.5rem auto; min-width: 400px; }
+  th, td { border: 1px solid #444; padding: 0.6rem 1.2rem; text-align: left; }
+  th { background: #222; }
+  a { color: #6bb4ff; }
+</style>
+</head>
+<body>
+  <h1>Attendance Records</h1>
+  <p><a href="/">&larr; Home</a> &nbsp;|&nbsp; <a href="/attendance">Mark Attendance</a></p>
+
+  {% if records %}
+  <table>
+    <tr><th>Name</th><th>Timestamp</th></tr>
+    {% for r in records %}
+    <tr><td>{{ r.name }}</td><td>{{ r.timestamp }}</td></tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p style="text-align:center;">No attendance records yet.</p>
+  {% endif %}
+</body>
+</html>

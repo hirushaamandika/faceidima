@@ -1,0 +1,8 @@
+Flask
+opencv-contrib-python
+numpy
+tensorflow
+pymysql
+boto3
+python-dotenv
+gunicorn

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Register Face</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #111; color: #eee; text-align: center; padding: 2rem; }
+  video { border-radius: 12px; max-width: 480px; width: 100%; background: #000; }
+  input { padding: 0.6rem; font-size: 1rem; border-radius: 6px; border: none; width: 220px; }
+  button { margin-top: 1rem; margin-left: 0.5rem; padding: 0.7rem 1.5rem; font-size: 1rem; border: none;
+           border-radius: 8px; background: #4caf50; color: white; cursor: pointer; }
+  button:disabled { background: #555; cursor: not-allowed; }
+  #status { margin-top: 1rem; min-height: 1.5rem; }
+  .error { color: #ff6b6b; }
+  .ok { color: #6bff8f; }
+  a { color: #6bb4ff; }
+  #progress { margin-top: 0.5rem; font-size: 1.1rem; }
+</style>
+</head>
+<body>
+  <h1>Register Face</h1>
+  <p><a href="/">&larr; Home</a></p>
+
+  <div>
+    <input id="nameInput" type="text" placeholder="Enter your name" />
+    <button id="startBtn">Start Capturing</button>
+  </div>
+
+  <div style="margin-top:1.5rem;">
+    <video id="video" autoplay playsinline></video>
+    <canvas id="canvas" style="display:none;"></canvas>
+  </div>
+
+  <div id="progress"></div>
+  <div id="status"></div>
+  <button id="trainBtn" style="display:none;">Finish &amp; Train Model</button>
+
+<script>
+const CAPTURES_NEEDED = 20;
+const CAPTURE_INTERVAL_MS = 400;
+
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const nameInput = document.getElementById('nameInput');
+const startBtn = document.getElementById('startBtn');
+const trainBtn = document.getElementById('trainBtn');
+const statusEl = document.getElementById('status');
+const progressEl = document.getElementById('progress');
+
+let capturing = false;
+let captureCount = 0;
+let intervalId = null;
+
+async function startCamera() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    video.srcObject = stream;
+  } catch (err) {
+    statusEl.textContent = 'Camera access denied: ' + err.message;
+    statusEl.className = 'error';
+    startBtn.disabled = true;
+  }
+}
+
+function grabFrameAsDataUrl() {
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  return canvas.toDataURL('image/jpeg', 0.9);
+}
+
+async function captureOnce(name) {
+  const dataUrl = grabFrameAsDataUrl();
+  const res = await fetch('/api/capture_face', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, image: dataUrl })
+  });
+  return res.json();
+}
+
+startBtn.addEventListener('click', () => {
+  const name = nameInput.value.trim();
+  if (!name) {
+    statusEl.textContent = 'Please enter a name first.';
+    statusEl.className = 'error';
+    return;
+  }
+  if (capturing) return;
+
+  capturing = true;
+  captureCount = 0;
+  startBtn.disabled = true;
+  nameInput.disabled = true;
+  statusEl.textContent = '';
+  statusEl.className = '';
+  progressEl.textContent = `Captured 0 / ${CAPTURES_NEEDED}`;
+
+  intervalId = setInterval(async () => {
+    if (captureCount >= CAPTURES_NEEDED) {
+      clearInterval(intervalId);
+      capturing = false;
+      progressEl.textContent = `Done: ${captureCount} images captured.`;
+      trainBtn.style.display = 'inline-block';
+      return;
+    }
+    try {
+      const data = await captureOnce(name);
+      if (data.success) {
+        captureCount = data.count;
+        progressEl.textContent = `Captured ${captureCount} / ${CAPTURES_NEEDED}`;
+      } else {
+        statusEl.textContent = data.error || 'Capture failed — hold still and face the camera.';
+        statusEl.className = 'error';
+      }
+    } catch (err) {
+      statusEl.textContent = 'Request failed: ' + err.message;
+      statusEl.className = 'error';
+    }
+  }, CAPTURE_INTERVAL_MS);
+});
+
+trainBtn.addEventListener('click', async () => {
+  trainBtn.disabled = true;
+  statusEl.textContent = 'Training model, please wait... (this can take a minute)';
+  statusEl.className = '';
+
+  try {
+    const res = await fetch('/api/train', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: nameInput.value.trim() })
+    });
+    const data = await res.json();
+    if (data.success) {
+      statusEl.innerHTML = `Training complete. Classes: ${data.classes.join(', ')}. ` +
+        `Train accuracy: ${(data.final_train_accuracy * 100).toFixed(1)}%. ` +
+        `<a href="/attendance">Go mark attendance &rarr;</a>`;
+      statusEl.className = 'ok';
+    } else {
+      statusEl.textContent = data.error || 'Training failed.';
+      statusEl.className = 'error';
+      trainBtn.disabled = false;
+    }
+  } catch (err) {
+    statusEl.textContent = 'Request failed: ' + err.message;
+    statusEl.className = 'error';
+    trainBtn.disabled = false;
+  }
+});
+
+startCamera();
+</script>
+</body>
+</html>

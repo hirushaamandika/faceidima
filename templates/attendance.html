@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Mark Attendance</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #111; color: #eee; text-align: center; padding: 2rem; }
+  video { border-radius: 12px; max-width: 480px; width: 100%; background: #000; }
+  button { margin-top: 1rem; padding: 0.8rem 1.8rem; font-size: 1rem; border: none;
+           border-radius: 8px; background: #4caf50; color: white; cursor: pointer; }
+  button:disabled { background: #555; cursor: not-allowed; }
+  #status { margin-top: 1.2rem; font-size: 1.2rem; min-height: 1.6rem; }
+  .error { color: #ff6b6b; }
+  .ok { color: #6bff8f; }
+  a { color: #6bb4ff; }
+</style>
+</head>
+<body>
+  <h1>Mark Attendance</h1>
+  <p><a href="/">&larr; Home</a> &nbsp;|&nbsp; <a href="/records">View Records</a></p>
+
+  <video id="video" autoplay playsinline></video>
+  <canvas id="canvas" style="display:none;"></canvas>
+
+  <div><button id="scanBtn">Scan &amp; Mark Attendance</button></div>
+  <div id="status"></div>
+
+<script>
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const scanBtn = document.getElementById('scanBtn');
+const statusEl = document.getElementById('status');
+
+async function startCamera() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    video.srcObject = stream;
+  } catch (err) {
+    statusEl.textContent = 'Camera access denied: ' + err.message;
+    statusEl.className = 'error';
+    scanBtn.disabled = true;
+  }
+}
+
+scanBtn.addEventListener('click', async () => {
+  statusEl.textContent = 'Scanning...';
+  statusEl.className = '';
+  scanBtn.disabled = true;
+
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+
+  try {
+    const res = await fetch('/api/mark_attendance', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: dataUrl })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      statusEl.textContent = `${data.message} (confidence ${data.confidence})`;
+      statusEl.className = 'ok';
+    } else {
+      statusEl.textContent = data.error || 'Could not mark attendance.';
+      statusEl.className = 'error';
+    }
+  } catch (err) {
+    statusEl.textContent = 'Request failed: ' + err.message;
+    statusEl.className = 'error';
+  } finally {
+    scanBtn.disabled = false;
+  }
+});
+
+startCamera();
+</script>
+</body>
+</html>
