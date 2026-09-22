@@ -1,10 +1,4 @@
-"""
-Run this once to check what databases exist on your SkySQL service,
-and create 'face_attendance' if it doesn't exist yet.
 
-Fill in the values below from your SkySQL Connect screen, then run:
-    python check_db.py
-"""
 
 import pymysql
 
@@ -12,7 +6,7 @@ HOST = "serverless-europe-west2.sysp0000.db2.skysql.com"
 PORT = 4000
 USER = "dbpgf38994718"
 PASSWORD = "0OkVj8D3i~EF4B97dfx3olJD"
-SSL_CA_PATH = "globalsignrootca.pem"  # must be in the same folder as this script
+SSL_CA_PATH = "globalsignrootca.pem"  
 
 conn = pymysql.connect(
     host=HOST,

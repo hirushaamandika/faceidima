@@ -14,7 +14,7 @@ import storage
 app = Flask(__name__)
 
 BASE_DIR = os.path.dirname(__file__)
-DATASET_DIR = os.path.join(BASE_DIR, "dataset")  # local scratch space only; source of truth is S3
+DATASET_DIR = os.path.join(BASE_DIR, "dataset") 
 os.makedirs(DATASET_DIR, exist_ok=True)
 
 # --- Face detector (Haar Cascade). Prefer a local copy bundled with this project. ---
@@ -106,7 +106,7 @@ def train():
         if name:
             database.add_user_if_missing(name)
 
-        # Pull the latest full dataset down from S3 into a clean local scratch folder.
+        
         if os.path.isdir(DATASET_DIR):
             shutil.rmtree(DATASET_DIR)
         os.makedirs(DATASET_DIR, exist_ok=True)
@@ -114,7 +114,7 @@ def train():
 
         result = face_model.train_and_save(DATASET_DIR)
 
-        # Push the freshly trained model back up to S3 so every instance can use it.
+       
         storage.upload_model_files(face_model.MODEL_DIR)
         face_model.reset_model_cache()
 

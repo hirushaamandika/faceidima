@@ -7,7 +7,7 @@ import pymysql.cursors
 
 try:
     from dotenv import load_dotenv
-    load_dotenv()  # loads a local .env file if present; no-op in production if absent
+    load_dotenv() 
 except ImportError:
     pass
 
@@ -16,7 +16,7 @@ MYSQL_PORT = int(os.environ.get("MYSQL_PORT", "3306"))
 MYSQL_USER = os.environ.get("MYSQL_USER", "root")
 MYSQL_PASSWORD = os.environ.get("MYSQL_PASSWORD", "")
 MYSQL_DATABASE = os.environ.get("MYSQL_DATABASE", "face_attendance")
-MYSQL_SSL_CA = os.environ.get("MYSQL_SSL_CA")  # path to CA cert file, e.g. skysql_ca.pem
+MYSQL_SSL_CA = os.environ.get("MYSQL_SSL_CA") 
 
 
 @contextmanager

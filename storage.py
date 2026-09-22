@@ -10,7 +10,7 @@ except ImportError:
     pass
 
 S3_BUCKET = os.environ.get("S3_BUCKET_NAME")
-S3_ENDPOINT_URL = os.environ.get("S3_ENDPOINT_URL")  # set for R2/Spaces/MinIO; leave unset for AWS S3
+S3_ENDPOINT_URL = os.environ.get("S3_ENDPOINT_URL") 
 S3_REGION = os.environ.get("S3_REGION", "us-east-1")
 
 DATASET_PREFIX = "dataset/"
@@ -25,8 +25,7 @@ def get_client():
     kwargs = {"region_name": S3_REGION}
     if S3_ENDPOINT_URL:
         kwargs["endpoint_url"] = S3_ENDPOINT_URL
-    # AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY are picked up automatically by boto3
-    # from the environment if set; no need to pass them explicitly here.
+   
     return boto3.client("s3", **kwargs)
 
 
@@ -71,7 +70,7 @@ def list_keys(prefix: str):
     return keys
 
 
-# --- App-specific helpers -------------------------------------------------
+
 
 def upload_dataset_image(person_folder: str, filename: str, image_bytes: bytes):
     key = f"{DATASET_PREFIX}{person_folder}/{filename}"
