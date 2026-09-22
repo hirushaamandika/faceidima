@@ -76,6 +76,10 @@ async function captureOnce(name) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, image: dataUrl })
   });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Server returned ${res.status}: ${text.slice(0, 150)}`);
+  }
   return res.json();
 }
 
@@ -96,29 +100,34 @@ startBtn.addEventListener('click', () => {
   statusEl.className = '';
   progressEl.textContent = `Captured 0 / ${CAPTURES_NEEDED}`;
 
-  intervalId = setInterval(async () => {
-    if (captureCount >= CAPTURES_NEEDED) {
-      clearInterval(intervalId);
-      capturing = false;
-      progressEl.textContent = `Done: ${captureCount} images captured.`;
-      trainBtn.style.display = 'inline-block';
-      return;
-    }
-    try {
-      const data = await captureOnce(name);
-      if (data.success) {
-        captureCount = data.count;
-        progressEl.textContent = `Captured ${captureCount} / ${CAPTURES_NEEDED}`;
-      } else {
-        statusEl.textContent = data.error || 'Capture failed — hold still and face the camera.';
-        statusEl.className = 'error';
-      }
-    } catch (err) {
-      statusEl.textContent = 'Request failed: ' + err.message;
+  captureLoop(name);
+});
+
+async function captureLoop(name) {
+  if (captureCount >= CAPTURES_NEEDED) {
+    capturing = false;
+    progressEl.textContent = `Done: ${captureCount} images captured.`;
+    trainBtn.style.display = 'inline-block';
+    return;
+  }
+
+  try {
+    const data = await captureOnce(name);
+    if (data.success) {
+      captureCount = data.count;
+      progressEl.textContent = `Captured ${captureCount} / ${CAPTURES_NEEDED}`;
+    } else {
+      statusEl.textContent = data.error || 'Capture failed — hold still and face the camera.';
       statusEl.className = 'error';
     }
-  }, CAPTURE_INTERVAL_MS);
-});
+  } catch (err) {
+    statusEl.textContent = 'Request failed: ' + err.message;
+    statusEl.className = 'error';
+  }
+
+  // Wait for this request to fully finish before starting the next one.
+  setTimeout(() => captureLoop(name), CAPTURE_INTERVAL_MS);
+}
 
 trainBtn.addEventListener('click', async () => {
   trainBtn.disabled = true;
