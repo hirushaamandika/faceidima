@@ -7,3 +7,5 @@ model/labels.json
 dataset/*/
 !dataset/.gitkeep
 .env
+check_db.py
+reset_data.py
